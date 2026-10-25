@@ -72,6 +72,10 @@ def build_system_prompt(summary: dict) -> str:
 
 def _upstream_error(exc):
     if isinstance(exc,AuthenticationError):return HTTPException(502,'OpenAI 인증에 실패했습니다. 서버 키를 확인해 주세요.')
+    if isinstance(exc,RateLimitError) and getattr(exc,'code',None)=='credit_balance_exhausted':
+        return HTTPException(429,'OpenAI API 크레딧이 소진되었습니다. 서버 관리자에게 문의해 주세요.')
+    if isinstance(exc,RateLimitError) and getattr(exc,'code',None) in ('insufficient_quota','organization_usage_limit_exceeded','organization_spend_limit_exceeded','project_spend_limit_exceeded'):
+        return HTTPException(429,'OpenAI API 사용 예산 또는 한도에 도달했습니다. 서버 관리자에게 문의해 주세요.')
     if isinstance(exc,RateLimitError):return HTTPException(429,'OpenAI 사용 한도에 도달했습니다. 잠시 후 다시 시도해 주세요.')
     if isinstance(exc,APITimeoutError):return HTTPException(504,'AI 응답 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.')
     return HTTPException(502,'AI 서비스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.')

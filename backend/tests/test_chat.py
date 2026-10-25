@@ -123,3 +123,13 @@ def test_chat_passes_total_deadline_to_storage_and_checks_late_result(client,mon
     response=client.post('/api/chat',json={'message':'slow save'})
     assert captured==[190]
     assert response.status_code==504
+def test_exhausted_credit_error_does_not_suggest_retrying(client,db,monkeypatch):
+    sdk=OpenAI(api_key='test-key',max_retries=0,http_client=httpx.Client(transport=httpx.MockTransport(
+        lambda request:httpx.Response(429,json={'error':{'message':'private billing detail','type':'insufficient_quota','code':'credit_balance_exhausted'}}))))
+    monkeypatch.setattr(ai(),'_get_openai',lambda:sdk)
+    r=client.post('/api/chat',json={'message':'질문'})
+    assert r.status_code==429
+    assert '크레딧' in r.json()['detail'] and '서버 관리자' in r.json()['detail']
+    assert '잠시 후' not in r.text and 'private' not in r.text
+    assert not [key for key in db.store if key[0]=='conversations']
+
