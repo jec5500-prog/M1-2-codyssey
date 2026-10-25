@@ -1,6 +1,7 @@
 # backend/main.py
 import logging
 import os
+import uuid
 from pathlib import Path
 from contextlib import asynccontextmanager
 
@@ -31,7 +32,7 @@ async def lifespan(app: FastAPI):
         init_firebase()
         logger.info("Firebase initialized")
     except Exception as exc:  # noqa: BLE001
-        logger.error("Firebase init failed at startup: %s", exc)
+        logger.error("Firebase init failed at startup: %s", type(exc).__name__)
     yield
 
 
@@ -59,25 +60,28 @@ app.add_middleware(
 # ---------------------------------------------------------------- 예외 처리
 @app.exception_handler(GoogleAPICallError)
 async def firestore_error_handler(request: Request, exc: GoogleAPICallError):
-    logger.exception("Firestore error")
+    request_id=uuid.uuid4().hex[:12]
+    logger.error("Firestore error id=%s type=%s", request_id, type(exc).__name__)
     return JSONResponse(
         status_code=503,
-        content={"detail": f"데이터베이스 오류가 발생했습니다: {exc.message}"},
+        content={"detail": "데이터베이스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.", "request_id":request_id},
     )
 
 
 @app.exception_handler(RuntimeError)
 async def runtime_error_handler(request: Request, exc: RuntimeError):
-    logger.exception("Runtime error")
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
+    request_id=uuid.uuid4().hex[:12]
+    logger.error("Configuration error id=%s type=%s", request_id, type(exc).__name__)
+    return JSONResponse(status_code=503, content={"detail": "서버 연결 설정을 확인해 주세요.", "request_id":request_id})
 
 
 @app.exception_handler(Exception)
 async def unhandled_error_handler(request: Request, exc: Exception):
-    logger.exception("Unhandled error")
+    request_id=uuid.uuid4().hex[:12]
+    logger.error("Unhandled error id=%s type=%s", request_id, type(exc).__name__)
     return JSONResponse(
         status_code=500,
-        content={"detail": "서버 내부 오류가 발생했습니다."},
+        content={"detail": "서버 내부 오류가 발생했습니다.", "request_id":request_id},
     )
 
 

@@ -71,7 +71,7 @@ def fetch_points(
     )
     if limit:
         query = query.limit(limit)
-    return [_doc_to_point(d) for d in query.stream()]
+    return [_doc_to_point(d) for d in query.stream(timeout=10, retry=None)]
 
 
 
