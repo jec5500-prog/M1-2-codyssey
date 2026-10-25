@@ -1,0 +1,139 @@
+<!-- frontend/index.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>데이터 챗봇</title>
+  <meta name="description" content="내 시계열 데이터를 분석해 주는 AI 챗봇" />
+  <script>
+    // 첫 페인트 전에 테마를 적용해 깜빡임 방지
+    (function () {
+      try {
+        var saved = localStorage.getItem('theme');
+        var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="style.css" />
+  <!-- API Base URL 설정 (Vercel 빌드 시 API_BASE_URL 환경변수로 덮어써짐) -->
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <!-- 사이드바: 이전 대화 목록 -->
+    <aside class="sidebar" id="sidebar" aria-label="대화 목록">
+      <div class="brand">
+        <span class="brand-logo">📈</span>
+        <span class="brand-name">데이터 챗봇</span>
+      </div>
+      <button id="newChatBtn" class="btn primary block" type="button">＋ 새 대화</button>
+      <div class="sidebar-title">이전 대화</div>
+      <div class="conv-list" id="convList" role="list"></div>
+    </aside>
+    <div class="backdrop" id="backdrop"></div>
+
+    <main class="main">
+      <header class="topbar">
+        <button id="menuBtn" class="icon-btn menu-btn" type="button" aria-label="메뉴 열기">☰</button>
+        <h1 class="topbar-title" id="topbarTitle">새 대화</h1>
+        <nav class="tabs" aria-label="화면 전환">
+          <button class="tab active" type="button" data-target="chatPane">💬 채팅</button>
+          <button class="tab" type="button" data-target="dataPane">📊 데이터</button>
+        </nav>
+        <button id="themeToggle" class="icon-btn" type="button" aria-label="다크모드 전환" title="다크모드 전환">🌙</button>
+      </header>
+
+      <!-- 콜드스타트 안내 배너 -->
+      <div id="coldBanner" class="cold-banner hidden" role="status" aria-live="polite">
+        <span class="spinner"></span>
+        <span>서버를 깨우는 중입니다. 무료 서버는 첫 요청에 최대 30~60초가 걸릴 수 있어요. 잠시만 기다려 주세요 ☕</span>
+      </div>
+
+      <div class="panes">
+        <!-- 채팅 영역 -->
+        <section class="pane chat-pane active" id="chatPane" aria-label="채팅">
+          <div class="chat-scroll" id="chatScroll">
+            <div id="messages" class="messages">
+              <div id="welcome" class="welcome">
+                <div class="welcome-emoji">🤖</div>
+                <h2>무엇이 궁금하신가요?</h2>
+                <p>등록된 데이터를 바탕으로 요약·추세·기간 비교를 도와드려요.<br />먼저 오른쪽(또는 '데이터' 탭)에서 데이터를 추가해 보세요.</p>
+                <div class="chips">
+                  <button type="button" class="chip" data-prompt="전체 데이터를 요약해 줘.">전체 데이터 요약</button>
+                  <button type="button" class="chip" data-prompt="최근 추세가 어떤지 분석해 줘.">최근 추세 분석</button>
+                  <button type="button" class="chip" data-prompt="값이 가장 높았던 날 5개를 알려줘.">최고값 TOP 5</button>
+                  <button type="button" class="chip" data-prompt="가장 최근 데이터 5건을 보여줘.">최근 5건 보기</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="composer">
+            <textarea id="chatInput" rows="1" placeholder="메시지를 입력하세요… (Enter 전송, Shift+Enter 줄바꿈)" maxlength="4000"></textarea>
+            <button id="sendBtn" class="btn primary" type="button">전송</button>
+          </div>
+        </section>
+
+        <!-- 데이터 관리 영역 -->
+        <section class="pane data-pane" id="dataPane" aria-label="데이터 관리">
+          <div class="data-scroll">
+            <div class="section-head">
+              <h2>데이터 요약</h2>
+              <button id="refreshBtn" class="btn ghost small" type="button">↻ 새로고침</button>
+            </div>
+            <div id="summaryPanel" class="summary-grid"></div>
+
+            <div class="section-head">
+              <h2>시계열 그래프</h2>
+            </div>
+            <div class="chart-wrap">
+              <canvas id="dataChart"></canvas>
+              <div id="chartEmpty" class="chart-empty hidden">표시할 데이터가 없습니다.</div>
+            </div>
+
+            <div class="section-head">
+              <h2 id="formTitle">데이터 추가</h2>
+            </div>
+            <form id="dataForm" class="data-form" autocomplete="off">
+              <label>날짜
+                <input type="date" id="fDate" required />
+              </label>
+              <label>값
+                <input type="number" id="fValue" step="any" required placeholder="예: 72.5" />
+              </label>
+              <label class="memo-field">메모
+                <input type="text" id="fMemo" maxlength="500" placeholder="선택 입력" />
+              </label>
+              <div class="form-actions">
+                <button type="submit" id="submitBtn" class="btn primary">추가</button>
+                <button type="button" id="cancelEditBtn" class="btn ghost hidden">취소</button>
+              </div>
+            </form>
+
+            <div class="section-head">
+              <h2>데이터 목록 <span class="count" id="dataCount"></span></h2>
+              <button id="csvBtn" class="btn ghost small" type="button">⬇ CSV 다운로드</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr><th>날짜</th><th class="num">값</th><th>메모</th><th class="actions">관리</th></tr>
+                </thead>
+                <tbody id="dataBody"></tbody>
+              </table>
+              <div id="tableEmpty" class="table-empty hidden">등록된 데이터가 없습니다. 위 폼에서 추가해 보세요.</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+</body>
+</html>
