@@ -115,6 +115,8 @@ def db(monkeypatch):
     fake = MemoryDB()
     monkeypatch.setattr(database, 'init_firebase', lambda:fake)
     monkeypatch.setattr(database, '_db', fake)
+    from services import ai_chat
+    monkeypatch.setattr(ai_chat, 'limiter', ai_chat.RateLimiter())
     return fake
 
 
