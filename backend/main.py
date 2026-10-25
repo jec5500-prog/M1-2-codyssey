@@ -1,6 +1,7 @@
 # backend/main.py
 import logging
 import os
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
@@ -9,11 +10,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google.api_core.exceptions import GoogleAPICallError
 
-load_dotenv(override=True)
+load_dotenv(Path(__file__).with_name('.env'), override=False)
 
 
 from database import init_firebase  # noqa: E402
 from routers import chat, data  # noqa: E402
+from settings import load_settings  # noqa: E402
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
@@ -41,18 +43,12 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------- CORS
-_origins_raw = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:3000,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8080",
-)
-origins = [o.strip().rstrip("/") for o in _origins_raw.split(",") if o.strip()]
-allow_all = "*" in origins
-origin_regex = os.getenv("CORS_ORIGIN_REGEX") or None  # 예: https://.*\.vercel\.app
+settings = load_settings()
+origins = settings.allowed_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if allow_all else origins,
-    allow_origin_regex=None if allow_all else origin_regex,
+    allow_origins=origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

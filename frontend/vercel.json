@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "echo \"window.APP_CONFIG = { API_BASE_URL: '${API_BASE_URL}' };\" > config.js",
+  "buildCommand": "node scripts/build-config.mjs",
   "outputDirectory": ".",
   "cleanUrls": true,
   "headers": [

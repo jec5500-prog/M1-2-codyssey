@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+backend/.venv/
+**/venv/
+**/__pycache__/
+.pytest_cache/
+.superpowers/
+.vercel/
+node_modules/
+*.log
+docs/test-results/private/
+

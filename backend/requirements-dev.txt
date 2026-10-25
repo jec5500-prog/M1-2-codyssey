@@ -1,0 +1,4 @@
+-r requirements.lock.txt
+pytest==9.1.1
+httpx2==2.16.0
+debugpy==1.8.22
