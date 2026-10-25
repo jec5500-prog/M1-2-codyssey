@@ -11,13 +11,14 @@ from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
 
 from database import get_db
-from models import DataPoint, DataPointCreate, DataPointUpdate, Summary
+from models import DataPoint, DataPointCreate, DataPointUpdate, Summary, validate_date_str
+from services.data_summary import compute_summary
 
 logger = logging.getLogger("data")
 
 router = APIRouter(prefix="/api/data", tags=["data"])
 
-COLLECTION = "data_points"
+COLLECTION = "data"
 TREND_WINDOW = 7
 DATE_PATTERN = r"^\d{4}-\d{2}-\d{2}$"
 
@@ -41,6 +42,16 @@ def _doc_to_point(doc) -> Dict[str, Any]:
     }
 
 
+def validate_period(start=None, end=None):
+    try:
+        if start: validate_date_str(start)
+        if end: validate_date_str(end)
+        if start and end and start > end:
+            raise ValueError("시작일은 종료일보다 늦을 수 없습니다.")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
 def fetch_points(
     start: Optional[str] = None,
     end: Optional[str] = None,
@@ -48,6 +59,7 @@ def fetch_points(
     descending: bool = False,
 ) -> List[Dict[str, Any]]:
     """기간 필터/정렬/개수 제한을 적용해 데이터 포인트 목록을 반환 (챗 도구에서도 재사용)."""
+    validate_period(start, end)
     query = _col()
     if start:
         query = query.where(filter=FieldFilter("date", ">=", start))
@@ -62,87 +74,8 @@ def fetch_points(
     return [_doc_to_point(d) for d in query.stream()]
 
 
-def _compute_trend(values: List[float]) -> Dict[str, Any]:
-    window = min(len(values), TREND_WINDOW)
-    if window < 2:
-        return {
-            "direction": "insufficient",
-            "label": "데이터 부족 (2건 이상 필요)",
-            "window": window,
-            "slope": None,
-            "change_percent": None,
-            "recent_average": values[-1] if values else None,
-        }
-
-    recent = values[-window:]
-    mean_x = (window - 1) / 2
-    mean_y = sum(recent) / window
-    num = sum((x - mean_x) * (y - mean_y) for x, y in enumerate(recent))
-    den = sum((x - mean_x) ** 2 for x in range(window))
-    slope = num / den if den else 0.0
-
-    base = abs(mean_y)
-    if base > 0:
-        rel = slope / base
-    else:
-        rel = 1.0 if slope > 0 else (-1.0 if slope < 0 else 0.0)
-
-    if rel > 0.01:
-        direction, label = "up", "상승 추세"
-    elif rel < -0.01:
-        direction, label = "down", "하락 추세"
-    else:
-        direction, label = "flat", "보합 (큰 변화 없음)"
-
-    first, last = recent[0], recent[-1]
-    change_percent = ((last - first) / abs(first) * 100) if first != 0 else None
-
-    return {
-        "direction": direction,
-        "label": label,
-        "window": window,
-        "slope": round(slope, 4),
-        "change_percent": round(change_percent, 2) if change_percent is not None else None,
-        "recent_average": round(mean_y, 4),
-    }
 
 
-def compute_summary(points: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """건수 / 평균 / 최소·최대 / 최근 추세 요약 (챗 시스템 프롬프트에서도 재사용)."""
-    pts = sorted(points, key=lambda p: p["date"])
-    n = len(pts)
-    if n == 0:
-        return {
-            "count": 0,
-            "average": None,
-            "total": None,
-            "minimum": None,
-            "maximum": None,
-            "latest": None,
-            "first_date": None,
-            "last_date": None,
-            "trend": _compute_trend([]),
-        }
-
-    values = [p["value"] for p in pts]
-    total = sum(values)
-    min_p = min(pts, key=lambda p: p["value"])
-    max_p = max(pts, key=lambda p: p["value"])
-
-    def ref(p):
-        return {"date": p["date"], "value": p["value"], "memo": p.get("memo", "")}
-
-    return {
-        "count": n,
-        "average": round(total / n, 4),
-        "total": round(total, 4),
-        "minimum": ref(min_p),
-        "maximum": ref(max_p),
-        "latest": ref(pts[-1]),
-        "first_date": pts[0]["date"],
-        "last_date": pts[-1]["date"],
-        "trend": _compute_trend(values),
-    }
 
 
 def _csv_safe(text: str) -> str:

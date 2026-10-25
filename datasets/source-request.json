@@ -1,0 +1,15 @@
+{
+  "url": "https://archive-api.open-meteo.com/v1/archive",
+  "params": {
+    "latitude": 37.5665,
+    "longitude": 126.978,
+    "start_date": "2026-06-01",
+    "end_date": "2026-09-30",
+    "daily": "temperature_2m_mean",
+    "timezone": "Asia/Seoul",
+    "models": "era5"
+  },
+  "retrieved_date": "2026-10-25",
+  "source_type": "ERA5 reanalysis",
+  "license": "CC BY 4.0"
+}

@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, FiniteFloat, field_validator
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -21,7 +21,7 @@ def validate_date_str(v: str) -> str:
 # ------------------------------------------------------------------ 데이터 도메인
 class DataPointBase(BaseModel):
     date: str = Field(..., description="날짜 (YYYY-MM-DD)", examples=["2025-01-31"])
-    value: float = Field(..., description="측정값")
+    value: FiniteFloat = Field(..., description="유한한 측정값")
     memo: str = Field("", max_length=500, description="메모")
 
     @field_validator("date")
@@ -36,7 +36,7 @@ class DataPointCreate(DataPointBase):
 
 class DataPointUpdate(BaseModel):
     date: Optional[str] = None
-    value: Optional[float] = None
+    value: Optional[FiniteFloat] = None
     memo: Optional[str] = Field(None, max_length=500)
 
     @field_validator("date")
