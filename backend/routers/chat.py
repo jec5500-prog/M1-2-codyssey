@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from google.cloud import firestore
 from openai import (
     APIConnectionError,
@@ -18,7 +18,8 @@ from openai import (
 )
 
 from database import get_db
-from models import ChatRequest, ChatResponse, ConversationDetail, ConversationMeta
+from models import ChatRequest, ChatResponse, ConversationDetail, ConversationMeta, ConversationCreate
+from services import conversations
 from routers.data import compute_summary, fetch_points
 
 logger = logging.getLogger("chat")
@@ -358,63 +359,26 @@ def chat(req: ChatRequest):
     if not reply.strip():
         reply = "죄송합니다, 응답을 생성하지 못했습니다. 다시 한 번 질문해 주세요."
 
-    # 4) Firestore 에 자동 저장
-    now = _now_iso()
-    stored.append({"role": "user", "content": req.message, "timestamp": now, "tools_used": []})
-    stored.append(
-        {"role": "assistant", "content": reply, "timestamp": _now_iso(), "tools_used": tools_used}
-    )
-    stored = stored[-MAX_STORED_MESSAGES:]
+    # 4) Shared transactional persistence, without truncating previous history.
+    id = conversations.append_turn(req.conversation_id, req.message, reply, tools_used)
+    return ChatResponse(conversation_id=id, reply=reply, tool_calls_used=tools_used)
 
-    conv_ref.set(
-        {
-            "title": title,
-            "created_at": created_at,
-            "updated_at": _now_iso(),
-            "messages": stored,
-        }
-    )
 
-    return ChatResponse(
-        conversation_id=conv_ref.id, reply=reply, tool_calls_used=tools_used
-    )
+@router.post("/conversations", response_model=ConversationDetail, status_code=201)
+def save_conversation(payload: ConversationCreate):
+    return conversations.save_conversation(payload.title, [m.model_dump() for m in payload.messages])
 
 
 @router.get("/conversations", response_model=List[ConversationMeta])
-def list_conversations(limit: int = 50):
-    limit = max(1, min(limit, 200))
-    docs = (
-        _conv_col()
-        .order_by("updated_at", direction=firestore.Query.DESCENDING)
-        .limit(limit)
-        .stream()
-    )
-    return [_meta_from_doc(d) for d in docs]
+def list_conversations(limit: int = Query(50, ge=1, le=200)):
+    return conversations.list_conversations(limit)
 
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationDetail)
 def get_conversation(conversation_id: str):
-    snap = _conv_col().document(conversation_id).get()
-    if not snap.exists:
-        raise HTTPException(status_code=404, detail="대화를 찾을 수 없습니다.")
-    d = snap.to_dict() or {}
-    meta = _meta_from_doc(snap)
-    messages = [
-        {
-            "role": m.get("role", "assistant"),
-            "content": m.get("content", ""),
-            "timestamp": m.get("timestamp", ""),
-            "tools_used": m.get("tools_used", []),
-        }
-        for m in d.get("messages", [])
-    ]
-    return {**meta, "messages": messages}
+    return conversations.get_conversation(conversation_id)
 
 
 @router.delete("/conversations/{conversation_id}", status_code=204)
 def delete_conversation(conversation_id: str):
-    ref = _conv_col().document(conversation_id)
-    if not ref.get().exists:
-        raise HTTPException(status_code=404, detail="대화를 찾을 수 없습니다.")
-    ref.delete()
-    return None
+    conversations.delete_conversation(conversation_id)

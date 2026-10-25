@@ -115,3 +115,20 @@ class ConversationMeta(BaseModel):
 
 class ConversationDetail(ConversationMeta):
     messages: List[ChatMessage] = []
+
+
+class MessageInput(BaseModel):
+    role: Literal['user', 'assistant']
+    content: str = Field(..., min_length=1, max_length=4000)
+
+    @field_validator('content')
+    @classmethod
+    def nonblank(cls, value: str) -> str:
+        value=value.strip()
+        if not value: raise ValueError('메시지가 비어 있습니다.')
+        return value
+
+
+class ConversationCreate(BaseModel):
+    title: Optional[str] = Field(None, max_length=100)
+    messages: List[MessageInput] = Field(..., min_length=1, max_length=200)
