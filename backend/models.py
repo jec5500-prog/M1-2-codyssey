@@ -21,7 +21,7 @@ def validate_date_str(v: str) -> str:
 # ------------------------------------------------------------------ 데이터 도메인
 class DataPointBase(BaseModel):
     date: str = Field(..., description="날짜 (YYYY-MM-DD)", examples=["2025-01-31"])
-    value: FiniteFloat = Field(..., description="유한한 측정값")
+    value: FiniteFloat = Field(..., ge=-1e12, le=1e12, description="측정값 (-1조~1조)")
     memo: str = Field("", max_length=500, description="메모")
 
     @field_validator("date")
@@ -36,7 +36,7 @@ class DataPointCreate(DataPointBase):
 
 class DataPointUpdate(BaseModel):
     date: Optional[str] = None
-    value: Optional[FiniteFloat] = None
+    value: Optional[FiniteFloat] = Field(None, ge=-1e12, le=1e12)
     memo: Optional[str] = Field(None, max_length=500)
 
     @field_validator("date")

@@ -2,9 +2,11 @@
 import json
 import re
 from datetime import datetime, timezone
+from time import monotonic as clock
 
 from fastapi import HTTPException
 from google.cloud import firestore
+from google.api_core.exceptions import FailedPrecondition, Aborted
 
 from database import get_db
 from models import ConversationCreate
@@ -37,8 +39,8 @@ def _meta(id: str, data: dict) -> dict:
             'updated_at':data.get('updated_at',''),'message_count':len(data.get('messages',[]))}
 
 
-def get_conversation(id: str) -> dict:
-    snap=_ref(id).get(timeout=10,retry=None)
+def get_conversation(id: str, *, timeout: float=10) -> dict:
+    snap=_ref(id).get(timeout=timeout,retry=None)
     if not snap.exists: raise HTTPException(404,'대화를 찾을 수 없습니다.')
     data=snap.to_dict()
     return {**_meta(id,data),'messages':data.get('messages',[])}
@@ -61,14 +63,21 @@ def save_conversation(title: str | None, messages: list[dict]) -> dict:
     return {**_meta(ref.id,body),'messages':stored}
 
 
-def append_turn(conversation_id: str | None,user: str,assistant: str,tools_used: list[str]) -> str:
+def _rpc_timeout(deadline: float | None) -> float:
+    seconds=10 if deadline is None else deadline-clock()
+    if seconds<=0:
+        raise HTTPException(504,'대화 저장 시간이 초과되었습니다. 기록을 확인한 뒤 다시 시도해 주세요.')
+    return min(10,seconds)
+
+
+def append_turn(conversation_id: str | None,user: str,assistant: str,tools_used: list[str], *, deadline: float | None=None) -> str:
     db=get_db()
     ref=_ref(conversation_id) if conversation_id else db.collection('conversations').document()
 
-    # A fresh wrapper per call keeps SDK retry state independent across requests.
-    @firestore.transactional
-    def write(transaction):
-        snap=ref.get(transaction=transaction,timeout=10,retry=None)
+    # Public version preconditions make each append atomic without unbounded
+    # transaction begin/commit retries. Every RPC shares the request deadline.
+    for attempt in range(3):
+        snap=ref.get(timeout=_rpc_timeout(deadline),retry=None)
         if conversation_id and not snap.exists: raise HTTPException(404,'대화가 삭제되었습니다. 새 대화를 시작해 주세요.')
         body=snap.to_dict() if snap.exists else {'title':' '.join(user.split())[:40], 'created_at':_now(),'messages':[]}
         stored=list(body.get('messages',[]))
@@ -77,10 +86,18 @@ def append_turn(conversation_id: str | None,user: str,assistant: str,tools_used:
             {'role':'assistant','content':assistant,'timestamp':_now(),'tools_used':list(tools_used)},
         ])
         _check_capacity(stored)
-        transaction.set(ref,{**body,'messages':stored,'updated_at':_now()})
-
-    write(db.transaction())
-    return ref.id
+        body={**body,'messages':stored,'updated_at':_now()}
+        try:
+            if conversation_id:
+                option=db.write_option(last_update_time=snap.update_time)
+                ref.update(body,option=option,timeout=_rpc_timeout(deadline),retry=None)
+            else:
+                ref.create(body,timeout=_rpc_timeout(deadline),retry=None)
+            _rpc_timeout(deadline)
+            return ref.id
+        except (FailedPrecondition,Aborted):
+            _rpc_timeout(deadline)
+    raise HTTPException(409,'동시에 대화가 변경되었습니다. 기록을 다시 불러온 뒤 시도해 주세요.')
 
 
 def check_room_for_turn(messages: list[dict]):

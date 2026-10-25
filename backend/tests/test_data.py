@@ -35,3 +35,27 @@ def test_export_neutralizes_formula_memo(client):
     assert "'=1+2" in r.text
     assert 'attachment' in r.headers['content-disposition']
 
+
+@pytest.mark.parametrize('value', [1e308,-1e308,1e12+1,-1e12-1])
+def test_values_that_can_overflow_summary_are_rejected(client,db,value):
+    response=client.post('/api/data',json={'date':'2026-06-01','value':value})
+    assert response.status_code==422
+    assert not db.store
+
+
+@pytest.mark.parametrize('literal',['1e999','NaN','Infinity','-Infinity'])
+def test_raw_nonfinite_json_receives_safe_validation_error(client,literal):
+    response=client.post('/api/data',content='{"date":"2026-06-01","value":'+literal+'}',headers={'Content-Type':'application/json'})
+    assert response.status_code==422
+    assert response.json()['detail'][0]['loc'][-1]=='value'
+
+def test_subnormal_start_value_does_not_overflow_trend_json(client):
+    import json
+    from services.data_summary import compute_summary
+    json.dumps(compute_summary([{'date':'2026-01-01','value':1e-320},{'date':'2026-01-02','value':1}]),allow_nan=False)
+    for day,value in [('2026-01-01',1e-320),('2026-01-02',1)]:
+        assert client.post('/api/data',json={'date':day,'value':value}).status_code==201
+    result=client.get('/api/data/summary')
+    assert result.status_code==200
+    assert result.json()['trend']['change_percent'] is None
+

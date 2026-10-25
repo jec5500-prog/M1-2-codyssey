@@ -64,3 +64,19 @@ def test_utf8_capacity_is_checked_not_only_message_count(db):
     with pytest.raises(HTTPException) as e:s.save_conversation(None,messages)
     assert e.value.status_code==409
     assert not db.store
+
+
+def test_append_bounds_every_storage_rpc_by_remaining_budget(db,monkeypatch):
+    s=service();id=s.append_turn(None,'first','reply',[])
+    monkeypatch.setattr(s,'clock',lambda:100)
+    db.calls=[]
+    s.append_turn(id,'next','reply',[],deadline=103)
+    assert db.calls
+    assert all(0 < call['timeout'] <= 3 for call in db.calls)
+
+
+def test_expired_storage_budget_does_not_write(db,monkeypatch):
+    s=service();monkeypatch.setattr(s,'clock',lambda:100)
+    with pytest.raises(HTTPException) as exc:s.append_turn(None,'q','a',[],deadline=99)
+    assert exc.value.status_code==504
+    assert not db.store

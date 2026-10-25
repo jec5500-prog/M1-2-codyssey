@@ -108,3 +108,18 @@ def test_tools_reject_unknown_tools_and_invalid_period(db):
     assert 'error' in mod.execute_tool('unknown',{})
     assert 'error' in mod.execute_tool('get_data_summary',{'start_date':'2026-02-30'})
     assert 'error' in mod.execute_tool('get_data_summary',{'start_date':'2026-09-01','end_date':'2026-06-01'})
+
+
+def test_chat_passes_total_deadline_to_storage_and_checks_late_result(client,monkeypatch):
+    mod,_=configure(monkeypatch,[completion()])
+    tick=[100]
+    monkeypatch.setattr(mod,'clock',lambda:tick[0])
+    captured=[]
+    def delayed_storage(*args,**kwargs):
+        captured.append(kwargs.get('deadline'))
+        tick[0]=250
+        return 'saved-id'
+    monkeypatch.setattr(mod.conversations,'append_turn',delayed_storage)
+    response=client.post('/api/chat',json={'message':'slow save'})
+    assert captured==[190]
+    assert response.status_code==504

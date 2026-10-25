@@ -57,6 +57,7 @@ def fetch_points(
     end: Optional[str] = None,
     limit: Optional[int] = None,
     descending: bool = False,
+    *, timeout: float = 10,
 ) -> List[Dict[str, Any]]:
     """기간 필터/정렬/개수 제한을 적용해 데이터 포인트 목록을 반환 (챗 도구에서도 재사용)."""
     validate_period(start, end)
@@ -71,7 +72,7 @@ def fetch_points(
     )
     if limit:
         query = query.limit(limit)
-    return [_doc_to_point(d) for d in query.stream(timeout=10, retry=None)]
+    return [_doc_to_point(d) for d in query.stream(timeout=timeout, retry=None)]
 
 
 

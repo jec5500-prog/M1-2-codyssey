@@ -27,17 +27,17 @@ class ExtremeArgs(Period):
     n: int=Field(5,ge=1,le=50)
 
 
-def execute_tool(name: str,args: dict) -> dict:
+def execute_tool(name: str,args: dict, *, timeout: float=10) -> dict:
     try:
         classes={'query_data_points':PointsArgs,'get_data_summary':Period,'get_extreme_points':ExtremeArgs}
         if name not in classes:return {'error':'알 수 없는 도구입니다.'}
         p=classes[name].model_validate(args)
         validate_period(p.start_date,p.end_date)
-        if name=='get_data_summary':return compute_summary(fetch_points(p.start_date,p.end_date))
+        if name=='get_data_summary':return compute_summary(fetch_points(p.start_date,p.end_date,timeout=timeout))
         if name=='query_data_points':
-            pts=fetch_points(p.start_date,p.end_date,p.limit,descending=p.order=='desc')
+            pts=fetch_points(p.start_date,p.end_date,p.limit,descending=p.order=='desc',timeout=timeout)
             return {'count':len(pts),'points':[{k:v for k,v in p.items() if k!='id'} for p in pts]}
-        pts=fetch_points(p.start_date,p.end_date)
+        pts=fetch_points(p.start_date,p.end_date,timeout=timeout)
         pts.sort(key=lambda v:v['value'],reverse=p.mode=='highest')
         return {'mode':p.mode,'points':[{k:v for k,v in row.items() if k!='id'} for row in pts[:p.n]]}
     except (ValidationError,HTTPException,ValueError):

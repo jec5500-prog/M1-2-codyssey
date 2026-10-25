@@ -3,6 +3,8 @@ import copy
 from datetime import datetime, timezone
 import itertools
 import threading
+from types import SimpleNamespace
+from google.api_core.exceptions import FailedPrecondition
 
 import pytest
 
@@ -13,6 +15,7 @@ class Snapshot:
         self.reference = ref
         self._data = copy.deepcopy(ref.store.get(ref.path))
         self.exists = self._data is not None
+        self.update_time = ref.db.versions.get(ref.path,0)
 
     def to_dict(self):
         return copy.deepcopy(self._data)
@@ -24,20 +27,33 @@ class Document:
         self.path = (collection, id)
 
     def get(self, transaction=None, **kwargs):
-        return Snapshot(self)
+        with self.db.lock:
+            self.db.calls.append({'operation':'get',**kwargs})
+            return Snapshot(self)
 
     def set(self, data, **kwargs):
-        self.store[self.path] = copy.deepcopy(data)
+        with self.db.lock:
+            self.store[self.path] = copy.deepcopy(data)
+            self.db.versions[self.path] = self.db.versions.get(self.path,0)+1
 
     def create(self, data, **kwargs):
-        assert self.path not in self.store
-        self.set(data)
+        with self.db.lock:
+            self.db.calls.append({'operation':'create',**kwargs})
+            assert self.path not in self.store
+            self.set(data)
 
     def update(self, data, **kwargs):
-        self.store[self.path].update(copy.deepcopy(data))
+        with self.db.lock:
+            self.db.calls.append({'operation':'update',**kwargs})
+            option=kwargs.get('option')
+            if option and option.last_update_time!=self.db.versions.get(self.path):
+                raise FailedPrecondition('changed')
+            self.set({**self.store[self.path],**copy.deepcopy(data)})
 
     def delete(self, **kwargs):
-        self.store.pop(self.path, None)
+        with self.db.lock:
+            self.store.pop(self.path, None)
+            self.db.versions[self.path]=self.db.versions.get(self.path,0)+1
 
 
 class Query:
@@ -72,6 +88,11 @@ class MemoryDB:
         self.store = {}
         self.ids = itertools.count(1)
         self.lock = threading.RLock()
+        self.versions = {}
+        self.calls = []
+
+    def write_option(self, **kwargs):
+        return SimpleNamespace(**kwargs)
 
     def collection(self, name):
         return Query(self, name)

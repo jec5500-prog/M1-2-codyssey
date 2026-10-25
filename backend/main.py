@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google.api_core.exceptions import GoogleAPICallError
@@ -58,6 +59,13 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------------- 예외 처리
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    # Raw JSON may contain infinity/NaN; do not echo non-JSON values or inputs.
+    errors=[{key:error[key] for key in ('loc','msg','type')} for error in exc.errors()]
+    return JSONResponse(status_code=422,content={'detail':errors})
+
+
 @app.exception_handler(GoogleAPICallError)
 async def firestore_error_handler(request: Request, exc: GoogleAPICallError):
     request_id=uuid.uuid4().hex[:12]

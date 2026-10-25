@@ -1,4 +1,5 @@
 from typing import List, Dict, Any
+from math import isfinite
 
 TREND_WINDOW = 7
 
@@ -36,6 +37,8 @@ def _compute_trend(values: List[float]) -> Dict[str, Any]:
 
     first, last = recent[0], recent[-1]
     change_percent = ((last - first) / abs(first) * 100) if first != 0 else None
+    if change_percent is not None and not isfinite(change_percent):
+        change_percent = None
 
     return {
         "direction": direction,

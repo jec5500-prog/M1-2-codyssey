@@ -86,9 +86,9 @@ def run_chat(message: str,conversation_id: str | None) -> ChatResponse:
         if seconds<=0:raise HTTPException(504,'대화 처리 시간이 초과되었습니다. 잠시 후 다시 시도해 주세요.')
         return seconds
 
-    history=conversations.get_conversation(conversation_id)['messages'] if conversation_id else []
+    history=conversations.get_conversation(conversation_id,timeout=min(10,remaining()))['messages'] if conversation_id else []
     conversations.check_room_for_turn(history)
-    summary=compute_summary(fetch_points())
+    summary=compute_summary(fetch_points(timeout=min(10,remaining())))
     messages=[{'role':'system','content':build_system_prompt(summary)}]
     messages.extend({'role':m['role'],'content':m['content']} for m in history[-20:])
     messages.append({'role':'user','content':message})
@@ -109,7 +109,8 @@ def run_chat(message: str,conversation_id: str | None) -> ChatResponse:
                 reply=(msg.content or '').strip()
                 if not reply:raise HTTPException(502,'AI가 빈 답변을 반환했습니다. 다시 시도해 주세요.')
                 remaining()
-                id=conversations.append_turn(conversation_id,message,reply,tools_used)
+                id=conversations.append_turn(conversation_id,message,reply,tools_used,deadline=started+cfg.chat_deadline_seconds)
+                remaining()
                 return ChatResponse(conversation_id=id,reply=reply,tool_calls_used=tools_used)
             if final:raise HTTPException(502,'AI 도구 호출 한도에 도달했습니다. 질문 범위를 좁혀 주세요.')
             messages.append(msg.model_dump(exclude_none=True))
@@ -122,7 +123,7 @@ def run_chat(message: str,conversation_id: str | None) -> ChatResponse:
                     except json.JSONDecodeError:args=None
                     if not isinstance(args,dict):value={'error':'도구 인자는 JSON 객체여야 합니다.'}
                     else:
-                        value=execute_tool(tc.function.name,args)
+                        value=execute_tool(tc.function.name,args,timeout=min(10,remaining()))
                         if 'error' not in value and tc.function.name not in tools_used:
                             tools_used.append(tc.function.name)
                         logger.info('tool name=%s args=%s success=%s',tc.function.name,json.dumps(args,ensure_ascii=True),'error' not in value)
