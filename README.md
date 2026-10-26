@@ -156,3 +156,7 @@ Vercel 프로젝트 `m1-2-codyssey-frontend`의 Overview에 `.deploy/vercel` 폴
 ## 승인 계획 문서
 
 10월 25일 개발 착수 전에 작성한 [현황·작업지시서·계획서·타임라인](docs/plans/README.md)을 보존했습니다. 최신 달성 여부는 위 미션 대조표와 인수 검사표를 기준으로 확인합니다.
+
+## 지정 폴더 이동 후 검증
+
+2026-10-27 사용자가 지정한 원본 폴더에서 Python 64개·JavaScript 8개 테스트, 의존성 검사, 로컬 API의 Firestore 요약 122건을 다시 통과했습니다. 새 GPT 질문은 HTTP 200으로 답변하고 대화 2개 메시지를 저장·재조회했으며, 검사 대화는 204로 삭제했습니다. [검증 기록](docs/test-results/desktop-migration-chat.json)을 참고하세요.
