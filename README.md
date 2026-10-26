@@ -15,7 +15,7 @@
 | Swagger | https://m1-2-codyssey.onrender.com/docs |
 | GitHub 변경 검토 | https://github.com/jec5500-prog/M1-2-codyssey/pull/1 |
 
-작업 브랜치는 `codex/ai-assistant-completion`이고, GitHub 저장소는 Public입니다. `main`에는 아직 병합하지 않았습니다. Render는 이 브랜치에서 배포하지만 Vercel은 Git에 연결되지 않은 수동 업로드입니다. **Vercel의 Require Log In이 All Deployments에 적용되어 비로그인 방문자는 앱 대신 Vercel 로그인 화면을 봅니다.** 사용자는 심사 자리에서 본인의 로그인 세션으로 시연하기로 했습니다. Render 무료 서비스는 유휴 후 첫 응답에 50초 이상 걸릴 수 있습니다.
+GitHub 저장소는 Public입니다. 기존 Vercel 프로젝트는 공식 GitHub App에서 이 저장소만 선택해 연결했고, Root Directory를 `frontend`로 지정했습니다. 2026-10-27 Production 배포는 `codex/ai-assistant-completion`의 커밋 `75b35c5`를 사용했습니다. 최종 Git 상태는 아래 배포 상태와 [인수 검사표](docs/acceptance.md)를 확인하세요. **Vercel의 Require Log In이 All Deployments에 적용되어 비로그인 방문자는 앱 대신 Vercel 로그인 화면을 봅니다.** 사용자는 심사 자리에서 본인의 로그인 세션으로 시연하기로 했습니다. Render 무료 서비스는 유휴 후 첫 응답에 50초 이상 걸릴 수 있습니다.
 
 ## 기술과 기능
 
@@ -120,22 +120,15 @@ backend/.venv/Scripts/python.exe -m pip check
 
 기존 Render 서비스의 Root Directory는 `backend`, Build는 `pip install -r requirements.lock.txt`, Start는 `uvicorn main:app --host 0.0.0.0 --port $PORT`, health는 `/health`입니다. `render.yaml`은 기존 서비스 설정의 참조용입니다.
 
-현재 프론트는 Vercel 대시보드의 **Drop to Deploy**로 배포했습니다. 배포용 폴더를 다시 만들 때는 저장소 루트에서 아래 명령을 실행합니다. `API_BASE_URL` 환경변수를 이용해 공개 API 주소만 담은 `config.js`를 만들며 키는 넣지 않습니다.
+초기 프론트는 Vercel 대시보드의 Drop to Deploy로 배포했습니다. 최종 배포는 **기존** `m1-2-codyssey-frontend` 프로젝트를 GitHub 저장소 `jec5500-prog/M1-2-codyssey`에 연결해 진행했습니다. Vercel 설정은 Root Directory=`frontend`, Build Command=`node scripts/build-config.mjs`, Output Directory=`.`, Production/Preview/Development 환경변수 `API_BASE_URL=https://m1-2-codyssey.onrender.com`입니다. 이 변수는 공개 API 주소이며 비밀 키가 아닙니다. Render의 `ALLOWED_ORIGINS`에는 제출용 Vercel origin을 등록했습니다. 로컬 `frontend/config.js`는 localhost용이며 Vercel 빌드 시 공개 API URL로 생성됩니다. Vercel CLI 인증은 사용자의 선택에 따라 사용하지 않았습니다.
 
-```powershell
-New-Item -ItemType Directory -Force .deploy/vercel | Out-Null
-Copy-Item frontend/index.html,frontend/app.js,frontend/style.css .deploy/vercel/ -Force
-$env:API_BASE_URL='https://m1-2-codyssey.onrender.com'
-node frontend/scripts/build-config.mjs .deploy/vercel/config.js
-```
+10월 27일 기존 프로젝트에 Git을 연결한 후 최신 커밋 `75b35c5`로 Preview를 생성하고 Production으로 승격했습니다. [Vercel Production 배포](https://vercel.com/won-ai-lab/m1-2-codyssey-frontend/EDgXaQajw9AwVPGocquAGZaeXbfm)는 Ready이며 [제출 주소](https://m1-2-codyssey-frontend.vercel.app)가 이 배포를 가리킵니다. 로그인된 제출 주소에서 Firestore 122건·평균 25.12℃·날짜 축이 표시된 차트를 확인했고, 새 GPT 질문에 122건·평균 25.1℃ 답변 및 대화 자동 저장을 확인했습니다. [최신 Production 데이터 화면](docs/screenshots/vercel-production-data-2026-10-27.jpg), [최신 Production AI 화면](docs/screenshots/vercel-production-chat-2026-10-27.jpg)을 참고하세요.
 
-Vercel 프로젝트 `m1-2-codyssey-frontend`의 Overview에 `.deploy/vercel` 폴더를 업로드해 Production을 갱신합니다. **GitHub 푸시만으로 Vercel은 갱신되지 않습니다.** GitHub 연동을 나중에 허용하면 Root Directory=`frontend`, 빌드=`node scripts/build-config.mjs`, 출력=`.`, 환경변수 `API_BASE_URL=https://m1-2-codyssey.onrender.com`으로 설정할 수 있습니다. 로컬 `frontend/config.js`는 개발용 localhost를 유지합니다. Render `ALLOWED_ORIGINS`에는 Vercel origin을 정확히 등록했습니다. Vercel CLI 인증·검증은 과제 완료 조건이 아닙니다.
-
-**10월 27일 배포 동기화 상태:** 현재 Production은 동작하지만, Vercel Source의 `app.js` 584행 그래프 x축 날짜 콜백이 최신 저장소 코드보다 한 버전 이전입니다. 최신 4개 파일은 `.deploy/vercel/`에 준비되어 있습니다. 연결 도구로 파일 업로드는 성공했으나 Production 배포 생성은 Vercel 권한 오류 403으로 실패했습니다. 따라서 위 폴더를 프로젝트 Overview에 직접 드롭해 갱신하고 새 배포의 Source/그래프를 확인해야 합니다. 로그인 보호는 유지합니다.
+향후 `main`에 반영된 프론트 변경은 Vercel의 Production Git 배포를 갱신합니다. `frontend/vercel.json`과 `frontend/scripts/build-config.mjs`가 빌드 설정을 보관합니다. Vercel의 **Require Log In: All Deployments**는 사용자의 선택에 따라 유지합니다. 따라서 비로그인 심사자는 프론트 앱 대신 Vercel 로그인 화면을 보며, 시연은 권한이 있는 계정으로 로그인한 브라우저에서 진행해야 합니다. 백엔드 API는 별도 로그인 보호가 없습니다.
 
 ## 실제 화면
 
-로컬 화면은 기본적으로 `http://localhost:8000`, Vercel 업로드본은 Render API와 연결됩니다. GPT 도구 호출과 자동 저장의 실서비스 결과는 [인수 검사표](docs/acceptance.md)에 기록합니다. 아래 CRUD 화면의 123번째 행은 검사용 임시 데이터로, 검사 후 삭제해 현재 기본 데이터는 122건입니다.
+로컬 화면은 기본적으로 `http://localhost:8000`, Vercel Production 배포본은 Render API와 연결됩니다. GPT 도구 호출과 자동 저장의 실서비스 결과는 [인수 검사표](docs/acceptance.md)에 기록합니다. 아래 CRUD 화면의 123번째 행은 검사용 임시 데이터로, 검사 후 삭제해 현재 기본 데이터는 122건입니다.
 
 ### 1. 데이터 요약이 반영된 채팅과 실제 GPT 답변
 
