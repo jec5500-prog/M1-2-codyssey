@@ -2,18 +2,18 @@
 
 저장된 서울 일평균기온을 조회·관리하고 GPT와 한국어로 통계와 기간을 비교하는 웹 앱입니다. FastAPI가 Firestore의 최신 요약을 system 메시지에 넣고, 필요한 경우 읽기 도구를 실행한 다음 질문과 답변을 자동 저장합니다.
 
-현재 제출 준비 상태와 미완료 항목은 [인수 검사표](docs/acceptance.md)를 확인하세요. 외부 계정 오류를 정상 AI 응답으로 대체하지 않습니다.
+원본 미션의 필수·보너스 요건별 구현 위치와 검증 범위는 [미션 대조표](docs/mission-audit-2026-10-27.md), 최신 검사 결과는 [인수 검사표](docs/acceptance.md)에 기록했습니다. 외부 계정 오류를 정상 AI 응답으로 대체하지 않습니다.
 
 ## 실행 주소
 
 | 대상 | 주소 |
 |---|---|
-| 프론트엔드 | https://m1-2-codyssey-frontend.vercel.app |
+| 프론트엔드 | https://m1-2-codyssey-frontend.vercel.app (Vercel 팀 로그인 필요) |
 | 백엔드 | https://m1-2-codyssey.onrender.com |
 | Swagger | https://m1-2-codyssey.onrender.com/docs |
 | GitHub 변경 검토 | https://github.com/jec5500-prog/M1-2-codyssey/pull/1 |
 
-작업 브랜치는 `codex/ai-assistant-completion`입니다. main 병합 전까지 배포 브랜치도 동일하게 유지합니다. Render 무료 서비스는 유휴 후 첫 응답에 50초 이상 걸릴 수 있습니다.
+작업 브랜치는 `codex/ai-assistant-completion`이고, GitHub 저장소는 Public입니다. `main`에는 아직 병합하지 않았습니다. Render는 이 브랜치에서 배포하지만 Vercel은 Git에 연결되지 않은 수동 업로드입니다. **Vercel의 Require Log In이 All Deployments에 적용되어 비로그인 방문자는 앱 대신 Vercel 로그인 화면을 봅니다.** 사용자는 심사 자리에서 본인의 로그인 세션으로 시연하기로 했습니다. Render 무료 서비스는 유휴 후 첫 응답에 50초 이상 걸릴 수 있습니다.
 
 ## 기술과 기능
 
@@ -24,6 +24,8 @@
 - 대화 수동 저장 API와 AI 자동 저장, 목록·복원·삭제, 로딩/실패 안내.
 - 기간 비교·최근 원본·최고/최저를 위한 Function Calling, CSV, 다크 모드.
 
+질문 → `POST /api/chat` → Firestore `data`의 최신 요약을 시스템 메시지에 포함 → 필요 시 모델이 읽기 도구 호출 → GPT 답변 → Firestore `conversations`에 자동 저장 → 목록/상세 API로 복원하는 구조입니다. 데이터 요약 API와 도구 호출은 같은 통계 서비스를 사용합니다.
+
 ## 데이터
 
 2026-06-01~2026-09-30의 서울 일평균기온 122건, 단위 ℃. Open-Meteo의 ERA5 재분석 자료이며 관측소 직접 관측값이 아닙니다. [원본·출처·이용 조건](datasets/README.md), [정제 CSV](datasets/seoul-temperature.csv)를 함께 제공합니다. 기온 합계는 단순 계산 지표입니다.
@@ -32,7 +34,7 @@ Firestore의 `data`와 `conversations` 컬렉션을 사용합니다. `firestore.
 
 ## 로컬 실행 — PowerShell
 
-저장소 루트에서 실행합니다. Python 3.13, Node.js 22가 필요합니다.
+저장소 루트에서 실행합니다. 과제 기준은 Python 3.10 이상이며, 이 저장소와 배포는 Python 3.13.14에서 검증했습니다. Node.js 22는 프론트 테스트와 배포 설정 파일 생성에 사용합니다.
 
 ```powershell
 python -m venv backend/.venv
@@ -116,12 +118,35 @@ backend/.venv/Scripts/python.exe -m pip check
 
 기존 Render 서비스의 Root Directory는 `backend`, Build는 `pip install -r requirements.lock.txt`, Start는 `uvicorn main:app --host 0.0.0.0 --port $PORT`, health는 `/health`입니다. `render.yaml`은 기존 서비스 설정의 참조용입니다.
 
-현재 프론트는 Vercel 대시보드의 **Drop to Deploy**로 배포했습니다. 업로드 파일은 `frontend/index.html`, `app.js`, `style.css` 및 `API_BASE_URL=https://m1-2-codyssey.onrender.com`을 넣은 `config.js`입니다. 이 방식은 GitHub 푸시 시 자동 갱신되지 않으므로 프론트 변경 시 대시보드에서 재배포해야 합니다. GitHub 연동을 나중에 허용하면 Root Directory=`frontend`, 빌드=`node scripts/build-config.mjs`, 출력=`.`, 환경변수 `API_BASE_URL=https://m1-2-codyssey.onrender.com`으로 설정할 수 있습니다. 로컬 `frontend/config.js`는 개발용 localhost를 유지합니다. 공개 프론트 origin은 Render `ALLOWED_ORIGINS`에 정확히 등록합니다. Vercel CLI 인증·검증은 과제 완료 조건이 아닙니다.
+현재 프론트는 Vercel 대시보드의 **Drop to Deploy**로 배포했습니다. 배포용 폴더를 다시 만들 때는 저장소 루트에서 아래 명령을 실행합니다. `API_BASE_URL` 환경변수를 이용해 공개 API 주소만 담은 `config.js`를 만들며 키는 넣지 않습니다.
+
+```powershell
+New-Item -ItemType Directory -Force .deploy/vercel | Out-Null
+Copy-Item frontend/index.html,frontend/app.js,frontend/style.css .deploy/vercel/ -Force
+$env:API_BASE_URL='https://m1-2-codyssey.onrender.com'
+node frontend/scripts/build-config.mjs .deploy/vercel/config.js
+```
+
+Vercel 프로젝트 `m1-2-codyssey-frontend`의 Overview에 `.deploy/vercel` 폴더를 업로드해 Production을 갱신합니다. **GitHub 푸시만으로 Vercel은 갱신되지 않습니다.** GitHub 연동을 나중에 허용하면 Root Directory=`frontend`, 빌드=`node scripts/build-config.mjs`, 출력=`.`, 환경변수 `API_BASE_URL=https://m1-2-codyssey.onrender.com`으로 설정할 수 있습니다. 로컬 `frontend/config.js`는 개발용 localhost를 유지합니다. Render `ALLOWED_ORIGINS`에는 Vercel origin을 정확히 등록했습니다. Vercel CLI 인증·검증은 과제 완료 조건이 아닙니다.
 
 ## 실제 화면
 
-로컬 및 공개 화면은 같은 Render API와 실제 Firestore 데이터를 사용합니다. GPT 도구 호출과 자동 저장의 실서비스 결과는 [인수 검사표](docs/acceptance.md)에 기록합니다.
+로컬 화면은 기본적으로 `http://localhost:8000`, Vercel 업로드본은 Render API와 연결됩니다. GPT 도구 호출과 자동 저장의 실서비스 결과는 [인수 검사표](docs/acceptance.md)에 기록합니다. 아래 CRUD 화면의 123번째 행은 검사용 임시 데이터로, 검사 후 삭제해 현재 기본 데이터는 122건입니다.
 
-![데이터 추가·수정 검수](docs/screenshots/crud-local.png)
+### 1. 데이터 요약이 반영된 채팅과 실제 GPT 답변
 
-나머지 필수 화면과 배포 검증 상태는 [인수표](docs/acceptance.md)를 확인하세요.
+![전체 122건 요약과 GPT 답변을 불러온 채팅 화면](docs/screenshots/vercel-ai-history-live.png)
+
+### 2. 데이터 관리와 수정 결과
+
+![임시 데이터를 수정한 뒤 값 24.5가 목록에 반영된 화면](docs/screenshots/crud-local.png)
+
+### 3. 저장된 대화 불러오기
+
+![수동 저장한 대화를 목록에서 선택해 두 메시지가 복원된 화면](docs/screenshots/history-manual-local.png)
+
+그래프와 추가 지표는 [배포 데이터 화면](docs/screenshots/vercel-data-live.png), 다크 모드는 [테마 화면](docs/screenshots/dark-mode.png)을 참고하세요. 수동 저장 화면의 답변은 검사용 메시지이며 GPT가 생성한 답변이 아닙니다.
+
+## Function Calling 근거
+
+2026-10-25 실제 질문은 “전체 데이터의 기간·개수·평균·최고·최저를 요약하고, 2026년 6월과 9월의 평균 기온을 비교해 줘”였습니다. 기간별 통계가 필요해 모델이 `get_data_summary`를 호출했고, 서버가 전체·6월·9월 범위의 요약을 같은 Firestore 데이터에서 조회했습니다. 조회 결과는 전체 122건 평균 25.1197℃, 6월 30건 평균 23.6667℃, 9월 30건 평균 21.8833℃였고, 답변은 각각 25.1℃·23.7℃·21.9℃로 반올림했습니다. 질문·답변과 `tool_calls_used=["get_data_summary"]`가 저장·재조회됐습니다. [실제 응답과 API 대조값](docs/test-results/live-chat-current.json)을 확인할 수 있습니다. 도구 사용 사실과 반환 데이터만 기록하며 모델의 비공개 추론 과정은 수집하지 않습니다.
