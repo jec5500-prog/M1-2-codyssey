@@ -129,6 +129,8 @@ node frontend/scripts/build-config.mjs .deploy/vercel/config.js
 
 Vercel 프로젝트 `m1-2-codyssey-frontend`의 Overview에 `.deploy/vercel` 폴더를 업로드해 Production을 갱신합니다. **GitHub 푸시만으로 Vercel은 갱신되지 않습니다.** GitHub 연동을 나중에 허용하면 Root Directory=`frontend`, 빌드=`node scripts/build-config.mjs`, 출력=`.`, 환경변수 `API_BASE_URL=https://m1-2-codyssey.onrender.com`으로 설정할 수 있습니다. 로컬 `frontend/config.js`는 개발용 localhost를 유지합니다. Render `ALLOWED_ORIGINS`에는 Vercel origin을 정확히 등록했습니다. Vercel CLI 인증·검증은 과제 완료 조건이 아닙니다.
 
+**10월 27일 배포 동기화 상태:** 현재 Production은 동작하지만, Vercel Source의 `app.js` 584행 그래프 x축 날짜 콜백이 최신 저장소 코드보다 한 버전 이전입니다. 최신 4개 파일은 `.deploy/vercel/`에 준비되어 있습니다. 연결 도구로 파일 업로드는 성공했으나 Production 배포 생성은 Vercel 권한 오류 403으로 실패했습니다. 따라서 위 폴더를 프로젝트 Overview에 직접 드롭해 갱신하고 새 배포의 Source/그래프를 확인해야 합니다. 로그인 보호는 유지합니다.
+
 ## 실제 화면
 
 로컬 화면은 기본적으로 `http://localhost:8000`, Vercel 업로드본은 Render API와 연결됩니다. GPT 도구 호출과 자동 저장의 실서비스 결과는 [인수 검사표](docs/acceptance.md)에 기록합니다. 아래 CRUD 화면의 123번째 행은 검사용 임시 데이터로, 검사 후 삭제해 현재 기본 데이터는 122건입니다.
