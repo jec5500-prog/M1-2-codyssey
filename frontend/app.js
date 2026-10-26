@@ -580,7 +580,8 @@
           },
         },
         scales: {
-          x: { ticks: { color: c.text, maxRotation: 0, autoSkip: true }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text, maxRotation: 0, autoSkip: true, maxTicksLimit: 4,
+            callback: value => labels[value]?.slice(5) || '' }, grid: { color: c.grid } },
           y: { ticks: { color: c.text }, grid: { color: c.grid } },
         },
       },

@@ -1,0 +1,52 @@
+{
+  "api_base_url": "https://m1-2-codyssey.onrender.com",
+  "checks": {
+    "/": 200,
+    "/health": 200,
+    "/docs": 200,
+    "/openapi.json": 200,
+    "data_summary_matches_rows": true,
+    "POST /api/data": 201,
+    "GET /api/data": 200,
+    "PUT /api/data/{id}": 200,
+    "DELETE /api/data/{id}": 204,
+    "POST /api/conversations": 201,
+    "GET /api/conversations": 200,
+    "GET /api/conversations/{id}": 200,
+    "DELETE /api/conversations/{id}": 204,
+    "invalid_input": 422,
+    "csv_rows_and_bom": true
+  },
+  "summary": {
+    "count": 122,
+    "average": 25.1197,
+    "total": 3064.6,
+    "minimum": {
+      "date": "2026-09-10",
+      "value": 18.2,
+      "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+    },
+    "maximum": {
+      "date": "2026-08-05",
+      "value": 31.9,
+      "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+    },
+    "latest": {
+      "date": "2026-09-30",
+      "value": 20.7,
+      "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+    },
+    "first_date": "2026-06-01",
+    "last_date": "2026-09-30",
+    "trend": {
+      "direction": "flat",
+      "label": "보합 (큰 변화 없음)",
+      "window": 7,
+      "slope": -0.2071,
+      "change_percent": -5.05,
+      "recent_average": 21.0143
+    }
+  },
+  "temporary_records_removed": true,
+  "chat": "Separate capped live GPT verification; not called by this script."
+}

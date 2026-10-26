@@ -1,0 +1,105 @@
+{
+  "question": "전체 데이터의 기간·개수·평균·최고·최저를 요약하고, 2026년 6월과 9월의 평균 기온을 비교해 줘. 섭씨 단위와 실제 수치를 간결하게 보여줘.",
+  "status": 200,
+  "body": {
+    "conversation_id": "y79yTxnjFwaDz2TxDm8b",
+    "reply": "전체 데이터 요약:\n- 기간: 2026-06-01 ~ 2026-09-30\n- 데이터 개수: 122\n- 평균 기온: 25.1 ℃\n- 최고 기온: 31.9 ℃ (2026-08-05)\n- 최저 기온: 18.2 ℃ (2026-09-10)\n\n2026년 6월 평균 기온: 23.7 ℃  \n2026년 9월 평균 기온: 21.9 ℃  \n비교: 6월이 9월보다 1.8 ℃ 더 높습니다.",
+    "tool_calls_used": [
+      "get_data_summary"
+    ]
+  },
+  "live_question_attempt": 5,
+  "saved_and_reloaded": true,
+  "expected": {
+    "whole": {
+      "count": 122,
+      "average": 25.1197,
+      "total": 3064.6,
+      "minimum": {
+        "date": "2026-09-10",
+        "value": 18.2,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "maximum": {
+        "date": "2026-08-05",
+        "value": 31.9,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "latest": {
+        "date": "2026-09-30",
+        "value": 20.7,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "first_date": "2026-06-01",
+      "last_date": "2026-09-30",
+      "trend": {
+        "direction": "flat",
+        "label": "보합 (큰 변화 없음)",
+        "window": 7,
+        "slope": -0.2071,
+        "change_percent": -5.05,
+        "recent_average": 21.0143
+      }
+    },
+    "june": {
+      "count": 30,
+      "average": 23.6667,
+      "total": 710.0,
+      "minimum": {
+        "date": "2026-06-11",
+        "value": 20.7,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "maximum": {
+        "date": "2026-06-16",
+        "value": 27.0,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "latest": {
+        "date": "2026-06-30",
+        "value": 25.8,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "first_date": "2026-06-01",
+      "last_date": "2026-06-30",
+      "trend": {
+        "direction": "up",
+        "label": "상승 추세",
+        "window": 7,
+        "slope": 0.4357,
+        "change_percent": 8.86,
+        "recent_average": 24.3
+      }
+    },
+    "september": {
+      "count": 30,
+      "average": 21.8833,
+      "total": 656.5,
+      "minimum": {
+        "date": "2026-09-10",
+        "value": 18.2,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "maximum": {
+        "date": "2026-09-03",
+        "value": 25.6,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "latest": {
+        "date": "2026-09-30",
+        "value": 20.7,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+      },
+      "first_date": "2026-09-01",
+      "last_date": "2026-09-30",
+      "trend": {
+        "direction": "flat",
+        "label": "보합 (큰 변화 없음)",
+        "window": 7,
+        "slope": -0.2071,
+        "change_percent": -5.05,
+        "recent_average": 21.0143
+      }
+    }
+  }
+}
