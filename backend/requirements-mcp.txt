@@ -1,0 +1,3 @@
+# Optional independent client/server environment (Python 3.11+).
+mcp==2.3.0
+httpx==0.28.1

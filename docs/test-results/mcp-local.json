@@ -1,0 +1,63 @@
+{
+  "api_base_url": "http://127.0.0.1:8000",
+  "server": "Codyssey Data Assistant",
+  "protocol": "2026-07-28",
+  "tools": [
+    "get_data_summary",
+    "query_data_points"
+  ],
+  "summary_matches_http_api": true,
+  "summary": {
+    "count": 122,
+    "average": 25.1197,
+    "total": 3064.6,
+    "minimum": {
+      "date": "2026-09-10",
+      "value": 18.2,
+      "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+    },
+    "maximum": {
+      "date": "2026-08-05",
+      "value": 31.9,
+      "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+    },
+    "latest": {
+      "date": "2026-09-30",
+      "value": 20.7,
+      "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석"
+    },
+    "first_date": "2026-06-01",
+    "last_date": "2026-09-30",
+    "trend": {
+      "direction": "flat",
+      "label": "보합 (큰 변화 없음)",
+      "window": 7,
+      "slope": -0.2071,
+      "change_percent": -5.05,
+      "recent_average": 21.0143
+    }
+  },
+  "recent": {
+    "count": 3,
+    "points": [
+      {
+        "date": "2026-09-30",
+        "value": 20.7,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석",
+        "id": "seoul-temperature-2026-09-30"
+      },
+      {
+        "date": "2026-09-29",
+        "value": 20.0,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석",
+        "id": "seoul-temperature-2026-09-29"
+      },
+      {
+        "date": "2026-09-28",
+        "value": 20.4,
+        "memo": "서울 일평균기온(℃) · Open-Meteo ERA5 재분석",
+        "id": "seoul-temperature-2026-09-28"
+      }
+    ]
+  }
+}

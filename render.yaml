@@ -1,0 +1,19 @@
+# Reference configuration for the EXISTING service; do not create a duplicate.
+services:
+  - type: web
+    name: M1-2-codyssey
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.lock.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers --forwarded-allow-ips '*'
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.14
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false

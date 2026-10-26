@@ -1,19 +1,23 @@
 # backend/main.py
 import logging
 import os
+import uuid
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from google.api_core.exceptions import GoogleAPICallError
 
-load_dotenv(override=True)
+load_dotenv(Path(__file__).with_name('.env'), override=False)
 
 
 from database import init_firebase  # noqa: E402
 from routers import chat, data  # noqa: E402
+from settings import load_settings  # noqa: E402
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
@@ -29,7 +33,7 @@ async def lifespan(app: FastAPI):
         init_firebase()
         logger.info("Firebase initialized")
     except Exception as exc:  # noqa: BLE001
-        logger.error("Firebase init failed at startup: %s", exc)
+        logger.error("Firebase init failed at startup: %s", type(exc).__name__)
     yield
 
 
@@ -41,18 +45,12 @@ app = FastAPI(
 )
 
 # ---------------------------------------------------------------- CORS
-_origins_raw = os.getenv(
-    "CORS_ORIGINS",
-    "http://localhost:3000,http://localhost:5500,http://127.0.0.1:5500,http://localhost:8080",
-)
-origins = [o.strip().rstrip("/") for o in _origins_raw.split(",") if o.strip()]
-allow_all = "*" in origins
-origin_regex = os.getenv("CORS_ORIGIN_REGEX") or None  # 예: https://.*\.vercel\.app
+settings = load_settings()
+origins = settings.allowed_origins
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"] if allow_all else origins,
-    allow_origin_regex=None if allow_all else origin_regex,
+    allow_origins=origins,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,27 +59,37 @@ app.add_middleware(
 
 
 # ---------------------------------------------------------------- 예외 처리
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError):
+    # Raw JSON may contain infinity/NaN; do not echo non-JSON values or inputs.
+    errors=[{key:error[key] for key in ('loc','msg','type')} for error in exc.errors()]
+    return JSONResponse(status_code=422,content={'detail':errors})
+
+
 @app.exception_handler(GoogleAPICallError)
 async def firestore_error_handler(request: Request, exc: GoogleAPICallError):
-    logger.exception("Firestore error")
+    request_id=uuid.uuid4().hex[:12]
+    logger.error("Firestore error id=%s type=%s", request_id, type(exc).__name__)
     return JSONResponse(
         status_code=503,
-        content={"detail": f"데이터베이스 오류가 발생했습니다: {exc.message}"},
+        content={"detail": "데이터베이스에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.", "request_id":request_id},
     )
 
 
 @app.exception_handler(RuntimeError)
 async def runtime_error_handler(request: Request, exc: RuntimeError):
-    logger.exception("Runtime error")
-    return JSONResponse(status_code=500, content={"detail": str(exc)})
+    request_id=uuid.uuid4().hex[:12]
+    logger.error("Configuration error id=%s type=%s", request_id, type(exc).__name__)
+    return JSONResponse(status_code=503, content={"detail": "서버 연결 설정을 확인해 주세요.", "request_id":request_id})
 
 
 @app.exception_handler(Exception)
 async def unhandled_error_handler(request: Request, exc: Exception):
-    logger.exception("Unhandled error")
+    request_id=uuid.uuid4().hex[:12]
+    logger.error("Unhandled error id=%s type=%s", request_id, type(exc).__name__)
     return JSONResponse(
         status_code=500,
-        content={"detail": "서버 내부 오류가 발생했습니다."},
+        content={"detail": "서버 내부 오류가 발생했습니다.", "request_id":request_id},
     )
 
 

@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, FiniteFloat, field_validator
 
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -21,7 +21,7 @@ def validate_date_str(v: str) -> str:
 # ------------------------------------------------------------------ 데이터 도메인
 class DataPointBase(BaseModel):
     date: str = Field(..., description="날짜 (YYYY-MM-DD)", examples=["2025-01-31"])
-    value: float = Field(..., description="측정값")
+    value: FiniteFloat = Field(..., ge=-1e12, le=1e12, description="측정값 (-1조~1조)")
     memo: str = Field("", max_length=500, description="메모")
 
     @field_validator("date")
@@ -36,7 +36,7 @@ class DataPointCreate(DataPointBase):
 
 class DataPointUpdate(BaseModel):
     date: Optional[str] = None
-    value: Optional[float] = None
+    value: Optional[FiniteFloat] = Field(None, ge=-1e12, le=1e12)
     memo: Optional[str] = Field(None, max_length=500)
 
     @field_validator("date")
@@ -115,3 +115,20 @@ class ConversationMeta(BaseModel):
 
 class ConversationDetail(ConversationMeta):
     messages: List[ChatMessage] = []
+
+
+class MessageInput(BaseModel):
+    role: Literal['user', 'assistant']
+    content: str = Field(..., min_length=1, max_length=4000)
+
+    @field_validator('content')
+    @classmethod
+    def nonblank(cls, value: str) -> str:
+        value=value.strip()
+        if not value: raise ValueError('메시지가 비어 있습니다.')
+        return value
+
+
+class ConversationCreate(BaseModel):
+    title: Optional[str] = Field(None, max_length=100)
+    messages: List[MessageInput] = Field(..., min_length=1, max_length=200)

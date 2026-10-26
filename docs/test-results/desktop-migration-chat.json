@@ -1,0 +1,16 @@
+{
+  "verified_at_kst": "2026-10-27T01:00:06+09:00",
+  "environment": "user-designated project folder; local FastAPI at 127.0.0.1:8765",
+  "health_status": 200,
+  "firestore_summary": {
+    "count": 122,
+    "average_celsius": 25.1197
+  },
+  "openai_chat_completions_status": 200,
+  "chat_api_status": 200,
+  "question": "전체 데이터의 개수와 평균을 알려줘",
+  "reply": "전체 데이터의 개수는 122개이며, 평균 기온은 25.12℃입니다.",
+  "tool_calls_used": [],
+  "saved_messages": 2,
+  "temporary_conversation_delete_status": 204
+}

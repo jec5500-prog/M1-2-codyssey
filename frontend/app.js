@@ -23,6 +23,9 @@
     editingId: null,
     chart: null,
     sending: false,
+    loadingConversation: false,
+    deletingConversation: false,
+    conversationLoadToken: 0,
   };
 
   // ------------------------------------------------------------------ DOM 헬퍼
@@ -43,6 +46,7 @@
     welcome: $('#welcome'),
     chatInput: $('#chatInput'),
     sendBtn: $('#sendBtn'),
+    saveStatus: $('#saveStatus'),
     summaryPanel: $('#summaryPanel'),
     refreshBtn: $('#refreshBtn'),
     chartCanvas: $('#dataChart'),
@@ -298,10 +302,16 @@
 
   function setSending(v) {
     state.sending = v;
-    el.sendBtn.disabled = v;
-    el.chatInput.disabled = v;
+    updateComposerState();
     el.sendBtn.textContent = v ? '…' : '전송';
     if (!v) el.chatInput.focus();
+  }
+
+  function updateComposerState() {
+    const busy = state.sending || state.loadingConversation || state.deletingConversation;
+    el.sendBtn.disabled = busy;
+    el.chatInput.disabled = busy;
+    el.newChatBtn.disabled = state.sending || state.deletingConversation;
   }
 
   function autosizeInput() {
@@ -311,13 +321,14 @@
 
   async function sendMessage(text) {
     const message = (text ?? el.chatInput.value).trim();
-    if (!message || state.sending) return;
+    if (!message || state.sending || state.loadingConversation || state.deletingConversation) return;
 
     el.chatInput.value = '';
     autosizeInput();
     appendMessage('user', message);
     setSending(true);
     const typing = appendTyping();
+    el.saveStatus.textContent = '답변을 만들고 있습니다…';
 
     try {
       const res = await api('/api/chat', {
@@ -327,6 +338,7 @@
       });
       typing.remove();
       appendMessage('assistant', res.reply, res.tool_calls_used || []);
+      el.saveStatus.textContent = '대화가 자동 저장되었습니다.';
 
       const isNew = state.conversationId !== res.conversation_id;
       state.conversationId = res.conversation_id;
@@ -336,6 +348,7 @@
       typing.remove();
       appendMessage('assistant', `⚠️ ${err.message}`, [], true);
       toast(err.message, 'error');
+      el.saveStatus.textContent = '답변을 저장하지 못했습니다. 오류를 확인해 주세요.';
     } finally {
       setSending(false);
     }
@@ -373,38 +386,61 @@
   }
 
   async function openConversation(id) {
-    if (state.sending) return;
+    if (state.sending || state.deletingConversation) return;
+    const token = ++state.conversationLoadToken;
+    state.loadingConversation = true;
+    updateComposerState();
     try {
       const conv = await api(`/api/conversations/${encodeURIComponent(id)}`);
+      if (token !== state.conversationLoadToken) return;
       state.conversationId = conv.id;
       el.topbarTitle.textContent = conv.title;
       clearMessages();
       if (!conv.messages.length) showWelcome();
       for (const m of conv.messages) appendMessage(m.role, m.content, m.tools_used || []);
+      el.saveStatus.textContent = '저장된 대화를 불러왔습니다.';
       renderConversations();
       switchPane('chatPane');
       openSidebar(false);
     } catch (err) {
-      toast(`대화를 불러오지 못했습니다: ${err.message}`, 'error');
+      if (token === state.conversationLoadToken) toast(`대화를 불러오지 못했습니다: ${err.message}`, 'error');
+    } finally {
+      if (token === state.conversationLoadToken) {
+        state.loadingConversation = false;
+        updateComposerState();
+      }
     }
   }
 
   async function deleteConversation(id) {
+    if (state.sending || state.loadingConversation || state.deletingConversation) {
+      return toast('진행 중인 요청이 끝난 뒤 대화를 삭제해 주세요.');
+    }
     if (!confirm('이 대화를 삭제할까요?')) return;
+    state.deletingConversation = true;
+    updateComposerState();
     try {
       await api(`/api/conversations/${encodeURIComponent(id)}`, { method: 'DELETE' });
+      state.deletingConversation = false;
       if (state.conversationId === id) newChat();
       await loadConversations();
       toast('대화를 삭제했습니다.', 'success');
     } catch (err) {
       toast(`삭제 실패: ${err.message}`, 'error');
+    } finally {
+      state.deletingConversation = false;
+      updateComposerState();
     }
   }
 
   function newChat() {
-    if (state.sending) return;
+    if (state.sending || state.deletingConversation) return;
+    ++state.conversationLoadToken;
+    state.loadingConversation = false;
+    updateComposerState();
     state.conversationId = null;
     el.topbarTitle.textContent = '새 대화';
+    el.saveStatus.textContent = '답변을 받으면 대화가 자동 저장됩니다.';
     showWelcome();
     renderConversations();
     switchPane('chatPane');
@@ -437,7 +473,7 @@
 
   function renderTable() {
     const rows = [...state.data].sort((a, b) => b.date.localeCompare(a.date));
-    el.dataCount.textContent = rows.length ? `(${rows.length}건)` : '';
+    el.dataCount.textContent = rows.length ? (state.summary?.count > rows.length ? `(최근 ${rows.length}건 / 전체 ${state.summary.count}건)` : `(${rows.length}건)`) : '';
     el.tableEmpty.classList.toggle('hidden', rows.length > 0);
     el.dataBody.innerHTML = rows
       .map(
@@ -544,7 +580,8 @@
           },
         },
         scales: {
-          x: { ticks: { color: c.text, maxRotation: 0, autoSkip: true }, grid: { color: c.grid } },
+          x: { ticks: { color: c.text, maxRotation: 0, autoSkip: true, maxTicksLimit: 4,
+            callback: value => labels[value]?.slice(5) || '' }, grid: { color: c.grid } },
           y: { ticks: { color: c.text }, grid: { color: c.grid } },
         },
       },
@@ -555,7 +592,7 @@
   async function loadData() {
     try {
       const [points, summary] = await Promise.all([
-        api('/api/data?limit=2000'),
+        api('/api/data?limit=2000&order=desc'),
         api('/api/data/summary'),
       ]);
       state.data = points;
@@ -599,7 +636,7 @@
     const memo = el.fMemo.value.trim();
 
     if (!date) return toast('날짜를 입력해 주세요.', 'error');
-    if (Number.isNaN(value)) return toast('값은 숫자로 입력해 주세요.', 'error');
+    if (!Number.isFinite(value)) return toast('값은 숫자로 입력해 주세요.', 'error');
 
     el.submitBtn.disabled = true;
     try {

@@ -1,0 +1,1 @@
+"""MCP read-only channel."""

@@ -1,0 +1,26 @@
+{
+  "name": "codyssey-data-assistant",
+  "version": "1.0.0",
+  "description": "Vanilla UI regression tests; production frontend has no framework",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "node --test tests/frontend/*.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jec5500-prog/M1-2-codyssey.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/jec5500-prog/M1-2-codyssey/issues"
+  },
+  "homepage": "https://github.com/jec5500-prog/M1-2-codyssey#readme",
+  "devDependencies": {
+    "jsdom": "^29.1.1"
+  },
+  "private": true
+}

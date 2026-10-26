@@ -73,8 +73,9 @@
               </div>
             </div>
           </div>
+          <div id="saveStatus" class="save-status" role="status" aria-live="polite">답변을 받으면 대화가 자동 저장됩니다.</div>
           <div class="composer">
-            <textarea id="chatInput" rows="1" placeholder="메시지를 입력하세요… (Enter 전송, Shift+Enter 줄바꿈)" maxlength="4000"></textarea>
+            <textarea aria-label="AI에게 질문" id="chatInput" rows="1" placeholder="메시지를 입력하세요… (Enter 전송, Shift+Enter 줄바꿈)" maxlength="4000"></textarea>
             <button id="sendBtn" class="btn primary" type="button">전송</button>
           </div>
         </section>
@@ -87,6 +88,7 @@
               <button id="refreshBtn" class="btn ghost small" type="button">↻ 새로고침</button>
             </div>
             <div id="summaryPanel" class="summary-grid"></div>
+            <p class="data-source">기본 데이터: 서울 일평균기온(℃), 2026년 6~9월 · <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> ERA5 재분석 데이터 · CC BY 4.0</p>
 
             <div class="section-head">
               <h2>시계열 그래프</h2>
