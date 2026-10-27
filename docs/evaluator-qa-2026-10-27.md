@@ -5,9 +5,9 @@
 
 ## 어떤 질문지를 채택했나
 
-이번에 첨부한 `C:/Users/josep/Desktop/M1-1-Project/질문.webp`의 **평가 질문 내용**이 이 프로젝트의 원본 과제인 [「AI Agent 개발: 나만의 AI 비서 구축」](../AI%20Agent%20개발%20나만의%20AI%20비서%20구축_261025.txt)에 맞는다. 배포 URL, Swagger, Firestore CRUD·요약, GPT 채팅·대화 복원, FastAPI/Pydantic 설계, 컨텍스트 주입, CORS·콜드스타트를 묻는 항목이 원본 요구사항과 직접 대응한다. 저장된 폴더 이름 `M1-1-Project`만으로 질문의 소속을 판단하지 않았다.
+이 문서는 앞서 확인한 **AI 비서 평가 질문 내용**을 대상으로 한다. 배포 URL, Swagger, Firestore CRUD·요약, GPT 채팅·대화 복원, FastAPI/Pydantic 설계, 컨텍스트 주입, CORS·콜드스타트에 관한 질문이 이 프로젝트의 [원본 과제](../AI%20Agent%20개발%20나만의%20AI%20비서%20구축_261025.txt)와 직접 대응한다. 이미지 파일명이나 저장 폴더명만으로 과제 소속을 판단하지 않는다.
 
-앞서 `M1-2 project/질문.webp`로 제시된 **시계열 분석 보고서** 질문지(분석 질문·차트·인사이트)는 이 AI 비서 미션의 평가표가 아니므로 사용하지 않는다. 새 이미지 안의 `imkm0520-glitch/Codyssey` 주소와 과거 `FAIL` 표시는 캡처된 예시 제출 정보이며, 이 프로젝트의 저장소나 평가 결과가 아니다.
+현재 `C:/Users/josep/Desktop/M1-1-Project/질문.webp`에는 **커피 선물 시계열 분석** 질문지가 저장돼 있으며, 그 질문은 [M1-1 평가 답변](https://github.com/jec5500-prog/M1-1-/blob/main/docs/evaluator-qa-2026-10-27.md)에서 다룬다. 화면에 나온 다른 제출자의 저장소 주소나 과거 `FAIL` 표시를 이 AI 비서 프로젝트의 평가 결과로 해석하지 않는다.
 
 ## 평가 전 확인한 실제 상태
 
