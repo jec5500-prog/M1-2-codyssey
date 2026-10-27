@@ -15,7 +15,7 @@
 | Swagger | https://m1-2-codyssey.onrender.com/docs |
 | GitHub 변경 검토 | https://github.com/jec5500-prog/M1-2-codyssey/pull/1 |
 
-GitHub 저장소는 Public입니다. 기존 Vercel 프로젝트는 공식 GitHub App에서 이 저장소만 선택해 연결했고, Root Directory를 `frontend`로 지정했습니다. 2026-10-27 Production 배포는 `codex/ai-assistant-completion`의 커밋 `75b35c5`를 사용했습니다. 최종 Git 상태는 아래 배포 상태와 [인수 검사표](docs/acceptance.md)를 확인하세요. **Vercel의 Require Log In이 All Deployments에 적용되어 비로그인 방문자는 앱 대신 Vercel 로그인 화면을 봅니다.** 사용자는 심사 자리에서 본인의 로그인 세션으로 시연하기로 했습니다. Render 무료 서비스는 유휴 후 첫 응답에 50초 이상 걸릴 수 있습니다.
+GitHub 저장소는 Public입니다. 기존 Vercel 프로젝트는 공식 GitHub App에서 이 저장소만 선택해 연결했고, Root Directory를 `frontend`로 지정했습니다. 2026-10-27 [PR #1](https://github.com/jec5500-prog/M1-2-codyssey/pull/1)을 `main`에 병합하고 Desktop 작업 폴더도 `main`으로 동기화했습니다. Vercel은 `main` 푸시를 Production에 자동 배포합니다. 최신 배포 상태는 [프로젝트 Overview](https://vercel.com/won-ai-lab/m1-2-codyssey-frontend)에서 확인할 수 있습니다. **Vercel의 Require Log In이 All Deployments에 적용되어 비로그인 방문자는 앱 대신 Vercel 로그인 화면을 봅니다.** 사용자는 심사 자리에서 본인의 로그인 세션으로 시연하기로 했습니다. Render 무료 서비스는 유휴 후 첫 응답에 50초 이상 걸릴 수 있습니다.
 
 ## 기술과 기능
 
@@ -122,7 +122,7 @@ backend/.venv/Scripts/python.exe -m pip check
 
 초기 프론트는 Vercel 대시보드의 Drop to Deploy로 배포했습니다. 최종 배포는 **기존** `m1-2-codyssey-frontend` 프로젝트를 GitHub 저장소 `jec5500-prog/M1-2-codyssey`에 연결해 진행했습니다. Vercel 설정은 Root Directory=`frontend`, Build Command=`node scripts/build-config.mjs`, Output Directory=`.`, Production/Preview/Development 환경변수 `API_BASE_URL=https://m1-2-codyssey.onrender.com`입니다. 이 변수는 공개 API 주소이며 비밀 키가 아닙니다. Render의 `ALLOWED_ORIGINS`에는 제출용 Vercel origin을 등록했습니다. 로컬 `frontend/config.js`는 localhost용이며 Vercel 빌드 시 공개 API URL로 생성됩니다. Vercel CLI 인증은 사용자의 선택에 따라 사용하지 않았습니다.
 
-10월 27일 기존 프로젝트에 Git을 연결한 후 최신 커밋 `75b35c5`로 Preview를 생성하고 Production으로 승격했습니다. [Vercel Production 배포](https://vercel.com/won-ai-lab/m1-2-codyssey-frontend/EDgXaQajw9AwVPGocquAGZaeXbfm)는 Ready이며 [제출 주소](https://m1-2-codyssey-frontend.vercel.app)가 이 배포를 가리킵니다. 로그인된 제출 주소에서 Firestore 122건·평균 25.12℃·날짜 축이 표시된 차트를 확인했고, 새 GPT 질문에 122건·평균 25.1℃ 답변 및 대화 자동 저장을 확인했습니다. [최신 Production 데이터 화면](docs/screenshots/vercel-production-data-2026-10-27.jpg), [최신 Production AI 화면](docs/screenshots/vercel-production-chat-2026-10-27.jpg)을 참고하세요.
+10월 27일 기존 프로젝트에 Git을 연결한 후 커밋 `75b35c5`로 Preview를 생성하고 [첫 최신 Production 배포](https://vercel.com/won-ai-lab/m1-2-codyssey-frontend/EDgXaQajw9AwVPGocquAGZaeXbfm)로 승격했습니다. PR #1 병합 커밋 `ac17245`도 `main`에서 자동 Production 배포되어 Ready가 됐습니다. [제출 주소](https://m1-2-codyssey-frontend.vercel.app)에서 Firestore 122건·평균 25.12℃·날짜 축이 표시된 차트를 확인했고, 새 GPT 질문에 122건·평균 25.1℃ 답변 및 대화 자동 저장을 확인했습니다. [최신 Production 데이터 화면](docs/screenshots/vercel-production-data-2026-10-27.jpg), [최신 Production AI 화면](docs/screenshots/vercel-production-chat-2026-10-27.jpg)을 참고하세요.
 
 향후 `main`에 반영된 프론트 변경은 Vercel의 Production Git 배포를 갱신합니다. `frontend/vercel.json`과 `frontend/scripts/build-config.mjs`가 빌드 설정을 보관합니다. Vercel의 **Require Log In: All Deployments**는 사용자의 선택에 따라 유지합니다. 따라서 비로그인 심사자는 프론트 앱 대신 Vercel 로그인 화면을 보며, 시연은 권한이 있는 계정으로 로그인한 브라우저에서 진행해야 합니다. 백엔드 API는 별도 로그인 보호가 없습니다.
 

@@ -36,7 +36,7 @@
 - 10/27 Render: [API 15항목](test-results/api-live.json) 통과·임시 레코드 제거, [MCP 실 API](test-results/mcp-live.json) count 122 일치. 프론트 origin의 CORS preflight 200 및 정확한 `Access-Control-Allow-Origin` 확인.
 - 실제 Function Calling은 10/25 [도구 호출·저장·통계 대조](test-results/live-chat-current.json)로 확인했다. 10/27 지정 작업 폴더의 로컬 API에서 [새 GPT 질문·자동 저장·재조회·검사 대화 삭제](test-results/desktop-migration-chat.json)를 확인했다. 이 질문은 시스템 요약으로 답했고 별도 도구 호출은 없었다.
 - 초기 Vercel 배포는 Drop to Deploy로 생성했다. 10/27 공식 Vercel GitHub App에 이 과제 저장소 **하나만** 추가하고 기존 프로젝트를 연결했다. 팀 전체 ChatGPT 접근 승인은 하지 않았고 CLI도 사용하지 않았다. Root Directory=`frontend`, 환경변수 `API_BASE_URL=https://m1-2-codyssey.onrender.com`을 설정했다.
-- [새 Production 배포](https://vercel.com/won-ai-lab/m1-2-codyssey-frontend/EDgXaQajw9AwVPGocquAGZaeXbfm)는 브랜치 `codex/ai-assistant-completion`의 `75b35c5`로 Ready이며 Overview의 [제출 도메인](https://m1-2-codyssey-frontend.vercel.app)이 이를 가리킨다. 로그인된 앱에서 122건·평균 25.12℃·날짜 눈금 차트를 확인했고 새 AI 질문에 122건·평균 25.1℃ 답변과 자동 저장을 확인했다. [이전 Source 드리프트](screenshots/vercel-source-drift.jpg)는 재배포 전 기록이며 해결됐다.
-- GitHub 저장소는 사용자의 선택에 따라 Public, Vercel 실행 화면은 로그인 보호 유지. 심사 시 Vercel 팀 권한이 있는 계정으로 로그인한 브라우저에서 시연한다. Git 병합 상태는 [PR #1](https://github.com/jec5500-prog/M1-2-codyssey/pull/1)을 기준으로 확인한다.
+- 첫 Git 기반 [Production 배포](https://vercel.com/won-ai-lab/m1-2-codyssey-frontend/EDgXaQajw9AwVPGocquAGZaeXbfm)는 `75b35c5`로 Ready였다. [PR #1](https://github.com/jec5500-prog/M1-2-codyssey/pull/1)의 `main` 병합 후 자동 Production 배포도 Ready이며 [제출 도메인](https://m1-2-codyssey-frontend.vercel.app)이 최신 `main` 배포를 가리킨다. 로그인된 앱에서 122건·평균 25.12℃·날짜 눈금 차트를 확인했고 새 AI 질문에 122건·평균 25.1℃ 답변과 자동 저장을 확인했다. [이전 Source 드리프트](screenshots/vercel-source-drift.jpg)는 재배포 전 기록이며 해결됐다.
+- GitHub 저장소는 사용자의 선택에 따라 Public, Vercel 실행 화면은 로그인 보호 유지. 심사 시 Vercel 팀 권한이 있는 계정으로 로그인한 브라우저에서 시연한다. [PR #1](https://github.com/jec5500-prog/M1-2-codyssey/pull/1)은 `main`에 병합됐고 Desktop 폴더도 `main`으로 동기화했다.
 
 인수 항목별 URL·화면·테스트는 [검사표](acceptance.md)에서 확인한다.
